@@ -2,10 +2,9 @@
 
 set -e
 
-BASE="$HOME/rclone/mount"
-
-ARGS="--allow-other --attr-timeout 1m --vfs-cache-mode writes --vfs-cache-max-size 60G --vfs-read-chunk-size-limit 512M --buffer-size 128M --cache-dir=$HOME/rclone/cache --vfs-fast-fingerprint --no-checksum --no-modtime --daemon"
-
-echo "$ARGS" | xargs rclone mount alist-dc:/ali/Movie "$BASE" --no-update-modtime
+rclone mount local:/ali "$HOME"/rclone/mount \
+--allow-other --attr-timeout 1m --buffer-size 128M --vfs-read-chunk-size-limit 512M \
+--vfs-cache-mode full --vfs-cache-max-age 2w --vfs-cache-max-size 30G --cache-dir="$HOME"/rclone/cache \
+--vfs-fast-fingerprint --no-checksum --no-modtime --no-seek --daemon
 
 echo 'done.'
