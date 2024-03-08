@@ -4,8 +4,6 @@ set -e
 
 USERNAME=sunls
 HOSTNAME=archlinux
-USER_THEME=user-theme.zip
-WORKSPACE_INDICATOR=workspace-indicator.zip
 
 echo -e '\033[32m==>\033[0m checking'
 
@@ -21,14 +19,14 @@ Server = https://mirrors.ustc.edu.cn/archlinux/\$repo/os/\$arch
 EOF
 
 echo -e '\033[32m==>\033[0m install linux system'
+# rygel 媒体共享，gnome-user-share 文件共享 gnome-remote-desktop 远程桌面 gnome-connections 连接
 pacstrap /mnt base base-devel linux linux-firmware \
-    vim wget curl docker git \
+    vim wget curl docker git jq \
 	intel-ucode grub efibootmgr \
-	gdm nautilus file-roller gnome-text-editor gnome-keyring gnome-disk-utility gnome-control-center gnome-clocks gnome-characters gnome-calendar gnome-calculator xdg-user-dirs-gtk baobab eog evince gnome-font-viewer gnome-system-monitor \
-    gnome-tweaks ibus-rime networkmanager terminator \
-    # rygel 媒体共享，gnome-user-share 文件共享 gnome-remote-desktop 远程桌面
+	gdm nautilus gnome-text-editor gnome-keyring gnome-disk-utility gnome-control-center gnome-clocks gnome-characters gnome-calendar gnome-calculator xdg-user-dirs-gtk baobab loupe evince gnome-font-viewer gnome-system-monitor \
+    gnome-tweaks ibus-rime networkmanager gnome-console \
 	zsh zsh-autosuggestions zsh-syntax-highlighting zsh-theme-powerlevel10k \
-	adobe-source-han-sans-cn-fonts papirus-icon-theme gnome-shell-extension-appindicator
+	adobe-source-han-sans-cn-fonts papirus-icon-theme gnome-shell-extension-appindicator gnome-browser-connector
 
 cp /etc/pacman.d/mirrorlist /mnt/etc/pacman.d/mirrorlist
 
@@ -40,14 +38,7 @@ arch-chroot /mnt /bin/bash -c "
 
 echo -e '\033[32m==>\033[0m pacman settings';
 sed -i 's|#Color|Color|g' /etc/pacman.conf;
-# cat >>/etc/pacman.conf <<EOF
-
-# [archlinuxcn]
-# Server = https://mirrors.ustc.edu.cn/archlinuxcn/\\\$arch
-# EOF
-
 pacman -Syy
-# pacman -S --noconfirm archlinuxcn-keyring
 
 echo -e '\033[32m==>\033[0m timezone settings';
 ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime;
@@ -93,7 +84,6 @@ else
     makepkg -si --noconfirm
     cd ~
     rm -rf yay-bin
-    yay --noconfirm -S gnome-shell-extension-unite gnome-shell-extension-dash-to-dock gnome-shell-extension-clipboard-history
 fi
 
 # zsh
@@ -109,12 +99,21 @@ fi
 [ -e .ssh/authorized_keys ] || (touch .ssh/authorized_keys && chmod 600 .ssh/authorized_keys)
 
 # theme
-git clone https://github.com/vinceliuice/Orchis-theme.git && cd Orchis-theme
-./install.sh -c light -s compact --tweaks compact --round 5px -l && cd ~ && rm -rf Orchis-theme
+mkdir -p theme && cd theme
+git clone --depth 1 https://github.com/vinceliuice/Orchis-theme.git && cd Orchis-theme
+./install.sh -t default -c light -s standard --round 5px --tweaks solid --tweaks compact && cd ..
+git clone --depth 1 https://github.com/vinceliuice/Matcha-gtk-theme.git && cd Matcha-gtk-theme
+./install.sh -t azul -c light && sudo ./install.sh -t azul -c light -g && cd ..
+cd ~ && rm -rf theme
+
+wget -qO- https://git.io/papirus-folders-install | sh
+papirus-folders -C breeze
+wget -qO- https://git.io/papirus-folders-install | env uninstall=true sh
+
 EOF
 
 echo -e '\033[32m==>\033[0m edit sshd_config'
-sed -i 's|#Port 22|Port 23|' /etc/ssh/sshd_config
+sed -i 's|#Port 22|Port 24|' /etc/ssh/sshd_config
 sed -i 's|PermitRootLogin yes|#PermitRootLogin yes|' /etc/ssh/sshd_config
 sed -i 's|UsePAM yes|UsePAM no|' /etc/ssh/sshd_config
 sed -i 's|#ClientAliveInterval 0|ClientAliveInterval 60|' /etc/ssh/sshd_config
@@ -122,13 +121,6 @@ sed -i 's|#ClientAliveCountMax 3|ClientAliveCountMax 10|' /etc/ssh/sshd_config
 
 echo -e '\033[32m==>\033[0m enable service'
 systemctl enable gdm NetworkManager bluetooth
-
-echo -e '\033[32m==>\033[0m extensions settings'
-curl https://sunls.eu.org/d/gnome/$USER_THEME > $USER_THEME
-unzip $USER_THEME -d /usr/share/gnome-shell/extensions/user-theme@gnome-shell-extensions.gcampax.github.com
-rm -rf $USER_THEME
-
-curl https://sunls.eu.org/d/gnome/$WORKSPACE_INDICATOR > $WORKSPACE_INDICATOR
-unzip $WORKSPACE_INDICATOR -d /usr/share/gnome-shell/extensions/workspace-indicator@gnome-shell-extensions.gcampax.github.com
-rm -rf $WORKSPACE_INDICATOR
 "
+
+# yay --noconfirm -S gnome-shell-extension-dash-to-dock gnome-shell-extension-clipboard-history xcursor-breeze google-chrome
