@@ -14,9 +14,6 @@ mount | grep /mnt/efi > /dev/null 2>&1 || (echo '/mnt/efi is not mounted.' && ex
 
 timedatectl set-ntp true
 systemctl stop reflector.service
-cat >/etc/pacman.d/mirrorlist <<EOF
-Server = https://mirrors.ustc.edu.cn/archlinux/\$repo/os/\$arch
-EOF
 
 echo -e '\033[32m==>\033[0m install linux system'
 # rygel 媒体共享，gnome-user-share 文件共享 gnome-remote-desktop 远程桌面 gnome-connections 连接
@@ -24,11 +21,9 @@ pacstrap /mnt base base-devel linux linux-firmware \
     vim wget curl docker git jq \
 	intel-ucode grub efibootmgr \
 	gdm nautilus gnome-text-editor gnome-keyring gnome-disk-utility gnome-control-center gnome-clocks gnome-characters gnome-calendar gnome-calculator xdg-user-dirs-gtk baobab loupe evince gnome-font-viewer gnome-system-monitor \
-    gnome-tweaks ibus-rime networkmanager gnome-console \
+    gnome-tweaks ibus-rime networkmanager tilix \
 	zsh zsh-autosuggestions zsh-syntax-highlighting zsh-theme-powerlevel10k \
 	adobe-source-han-sans-cn-fonts papirus-icon-theme gnome-shell-extension-appindicator gnome-browser-connector
-
-cp /etc/pacman.d/mirrorlist /mnt/etc/pacman.d/mirrorlist
 
 echo -e '\033[32m==>\033[0m fstab settings'
 genfstab -U /mnt > /mnt/etc/fstab
@@ -76,23 +71,17 @@ echo -e '\033[32m==>\033[0m $USERNAME settings'
 
 sudo -i -u $USERNAME bash <<EOF
 # yay
-if command -v yay >/dev/null 2>&1; then
-    true
-else
-    git clone https://aur.archlinux.org/yay-bin.git
-    cd yay-bin
-    makepkg -si --noconfirm
-    cd ~
-    rm -rf yay-bin
-fi
-
+git clone https://aur.archlinux.org/yay-bin.git
+cd yay-bin
+makepkg -si --noconfirm
+cd ~
+rm -rf yay-bin
+    
 # zsh
-if [ ! -e .zshrc ]; then
-    wget https://raw.githubusercontent.com/sunls24/config/main/.zshrc
-fi
+wget https://raw.githubusercontent.com/sunls24/config/main/.zshrc
 
 # vim
-[ -e .vimrc ] || curl -s https://raw.githubusercontent.com/sunls24/config/main/one.vim | bash
+curl -s https://raw.githubusercontent.com/sunls24/config/main/one.vim | bash
 
 # ssh
 [ -e .ssh ] || (mkdir .ssh && chmod 700 .ssh)
@@ -103,14 +92,17 @@ mkdir -p theme && cd theme
 git clone --depth 1 https://github.com/vinceliuice/Orchis-theme.git && cd Orchis-theme
 ./install.sh -t default -c light -s standard --round 5px --tweaks solid --tweaks compact && cd ..
 git clone --depth 1 https://github.com/vinceliuice/Matcha-gtk-theme.git && cd Matcha-gtk-theme
-./install.sh -t azul -c light && sudo ./install.sh -t azul -c light -g && cd ..
+./install.sh -t azul -c light
 cd ~ && rm -rf theme
 
 wget -qO- https://git.io/papirus-folders-install | sh
 papirus-folders -C breeze
 wget -qO- https://git.io/papirus-folders-install | env uninstall=true sh
 
+yay -S --noconfirm sing-box-bin xcursor-breeze google-chrome
 EOF
+
+curl https://pan.sunls.de/d/x/sync/sing-box.json > /etc/sing-box/config.json
 
 echo -e '\033[32m==>\033[0m edit sshd_config'
 sed -i 's|#Port 22|Port 24|' /etc/ssh/sshd_config
@@ -120,7 +112,7 @@ sed -i 's|#ClientAliveInterval 0|ClientAliveInterval 60|' /etc/ssh/sshd_config
 sed -i 's|#ClientAliveCountMax 3|ClientAliveCountMax 10|' /etc/ssh/sshd_config
 
 echo -e '\033[32m==>\033[0m enable service'
-systemctl enable gdm NetworkManager bluetooth
+systemctl enable gdm NetworkManager sing-box
 "
 
-# yay --noconfirm -S gnome-shell-extension-dash-to-dock gnome-shell-extension-clipboard-history xcursor-breeze google-chrome
+# yay -S apple-fonts
